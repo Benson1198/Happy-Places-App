@@ -10,6 +10,12 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HappyPlaces">
         <activity
+            android:name=".AddHappyPlaceActivity"
+            android:screenOrientation="portrait"
+            android:label="ADD HAPPY PLACE"
+            android:theme="@style/CustomNoActionBarTheme"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
