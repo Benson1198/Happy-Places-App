@@ -89,6 +89,8 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/edit_text_hint_date"
                     android:inputType="text"
+                    android:focusable="false"
+                    android:focusableInTouchMode="false"
                     android:textColor="@color/primary_text_color"
                     android:textColorHint="@color/secondary_text_color"
                     android:textSize="@dimen/edit_text_text_size" />
