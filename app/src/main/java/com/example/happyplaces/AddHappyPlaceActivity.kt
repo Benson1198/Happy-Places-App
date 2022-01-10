@@ -1,6 +1,7 @@
 package com.example.happyplaces
 
 import android.Manifest
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
@@ -12,6 +13,8 @@ import android.provider.MediaStore
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import com.example.happyplaces.databinding.ActivityAddHappyPlaceBinding
 import com.karumi.dexter.Dexter
 import java.text.SimpleDateFormat
@@ -23,9 +26,7 @@ import com.karumi.dexter.listener.PermissionRequest
 
 
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
-
-
-
+import java.io.IOException
 
 
 class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
@@ -33,6 +34,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
     private var binding: ActivityAddHappyPlaceBinding? = null
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
+    private lateinit var galleryImageResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
             onBackPressed()
         }
 
+        registerOnActivityForResult()
 
         dateSetListener = DatePickerDialog.OnDateSetListener { view, year, month, dayOfMonth ->
             cal.set(Calendar.YEAR,year)
@@ -84,14 +87,39 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         }
     }
 
+    private fun registerOnActivityForResult(){
+        galleryImageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
+        { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+
+                val data: Intent? = result.data
+                if(data!=null){
+                    val contentUri=data.data
+                    try{
+                        binding?.ivPlaceImage?.setImageURI(contentUri)
+                    }
+                    catch (e: IOException){
+                        e.printStackTrace()
+                        Toast.makeText(this, "Failed to load image from gallery",
+                            Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+
     private fun choosePhotoFromGallery(){
         Dexter.withContext(this).withPermissions(
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         ).withListener(object : MultiplePermissionsListener {
             override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
-                if(report!!.areAllPermissionsGranted()){
-                    val galleryIntent = Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                if (report!!.areAllPermissionsGranted()) {
+                    val galleryIntent=Intent(Intent.ACTION_PICK,
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+
+                    galleryImageResultLauncher.launch(galleryIntent)
                 }
             }
             override fun onPermissionRationaleShouldBeShown(
@@ -129,6 +157,10 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         val sdf = SimpleDateFormat(myFormat,Locale.getDefault())
         binding?.etDate?.setText(sdf.format(cal.time).toString())
 
+    }
+
+    companion object{
+        private const val GALLERY = 1
     }
 
 }
