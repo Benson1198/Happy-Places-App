@@ -35,7 +35,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
     private var binding: ActivityAddHappyPlaceBinding? = null
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
-//    private lateinit var galleryImageResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,8 +46,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         binding?.toolbarAddPlace?.setNavigationOnClickListener {
             onBackPressed()
         }
-
-//        registerOnActivityForResult()
 
         dateSetListener = DatePickerDialog.OnDateSetListener { view, year, month, dayOfMonth ->
             cal.set(Calendar.YEAR,year)
@@ -86,31 +83,6 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         }
     }
 
-//    private fun registerOnActivityForResult(){
-//        galleryImageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
-//        { result ->
-//            if (result.resultCode == Activity.RESULT_OK) {
-//
-//                val data: Intent? = result.data
-//                if(data!=null){
-//                    val contentUri=data.data
-//                    try{
-//                        binding?.ivPlaceImage?.setImageURI(contentUri)
-//                    }
-//                    catch (e: IOException){
-//                        e.printStackTrace()
-//                        Toast.makeText(this, "Failed to load image from gallery",
-//                            Toast.LENGTH_SHORT).show()
-//                    }
-//                }
-//            }
-//            else if(result.resultCode == Activity.RESULT_OK){
-//                val data: Intent? = result.data
-//                val thumbNail : Bitmap = data!!.extras?.get("data") as Bitmap
-//                binding?.ivPlaceImage?.setImageBitmap(thumbNail)
-//            }
-//        }
-//    }
 
     var galleryImageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
     { result ->
