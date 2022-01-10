@@ -8,6 +8,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.provider.Settings
 import android.view.View
 import android.widget.Toast
@@ -19,7 +20,7 @@ import com.karumi.dexter.PermissionToken
 
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.listener.PermissionRequest
-import com.karumi.dexter.listener.SettingsClickListener
+
 
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 
@@ -67,7 +68,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
             binding?.tvAddImage?.id ->{
                 val pictureDialog = AlertDialog.Builder(this)
                 pictureDialog.setTitle("Select Action")
-                val pictureDialogItems = arrayOf("Select photo from Galary",
+                val pictureDialogItems = arrayOf("Select photo from Gallery",
                 "Capture photo from camera")
                 pictureDialog.setItems(pictureDialogItems){
                     dialog,which ->
@@ -90,10 +91,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         ).withListener(object : MultiplePermissionsListener {
             override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
                 if(report!!.areAllPermissionsGranted()){
-                    Toast.makeText(this@AddHappyPlaceActivity,
-                        "Storage READ/WRITE permission are granted. " +
-                                "Now you can select an image from the gallery",
-                        Toast.LENGTH_SHORT).show()
+                    val galleryIntent = Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
                 }
             }
             override fun onPermissionRationaleShouldBeShown(
