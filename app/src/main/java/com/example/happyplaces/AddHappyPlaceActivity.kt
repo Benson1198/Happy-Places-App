@@ -6,6 +6,7 @@ import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -34,7 +35,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
     private var binding: ActivityAddHappyPlaceBinding? = null
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
-    private lateinit var galleryImageResultLauncher: ActivityResultLauncher<Intent>
+//    private lateinit var galleryImageResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +48,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
             onBackPressed()
         }
 
-        registerOnActivityForResult()
+//        registerOnActivityForResult()
 
         dateSetListener = DatePickerDialog.OnDateSetListener { view, year, month, dayOfMonth ->
             cal.set(Calendar.YEAR,year)
@@ -77,9 +78,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
                     dialog,which ->
                     when(which){
                         0-> choosePhotoFromGallery()
-                        1-> Toast.makeText(this@AddHappyPlaceActivity,
-                        "Camera selection coming soon...",
-                            Toast.LENGTH_SHORT).show()
+                        1-> takePhotoFromCamera()
                     }
                 }
                 pictureDialog.show()
@@ -87,26 +86,84 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         }
     }
 
-    private fun registerOnActivityForResult(){
-        galleryImageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
-        { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
+//    private fun registerOnActivityForResult(){
+//        galleryImageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
+//        { result ->
+//            if (result.resultCode == Activity.RESULT_OK) {
+//
+//                val data: Intent? = result.data
+//                if(data!=null){
+//                    val contentUri=data.data
+//                    try{
+//                        binding?.ivPlaceImage?.setImageURI(contentUri)
+//                    }
+//                    catch (e: IOException){
+//                        e.printStackTrace()
+//                        Toast.makeText(this, "Failed to load image from gallery",
+//                            Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//            }
+//            else if(result.resultCode == Activity.RESULT_OK){
+//                val data: Intent? = result.data
+//                val thumbNail : Bitmap = data!!.extras?.get("data") as Bitmap
+//                binding?.ivPlaceImage?.setImageBitmap(thumbNail)
+//            }
+//        }
+//    }
 
-                val data: Intent? = result.data
-                if(data!=null){
-                    val contentUri=data.data
-                    try{
-                        binding?.ivPlaceImage?.setImageURI(contentUri)
-                    }
-                    catch (e: IOException){
-                        e.printStackTrace()
-                        Toast.makeText(this, "Failed to load image from gallery",
-                            Toast.LENGTH_SHORT).show()
-                    }
+    var galleryImageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
+    { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+
+            val data: Intent? = result.data
+            if (data != null) {
+                val contentUri = data.data
+                try {
+                    binding?.ivPlaceImage?.setImageURI(contentUri)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    Toast.makeText(
+                        this, "Failed to load image from gallery",
+                        Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
         }
     }
+
+    var resultLauncherCamera = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+
+            val thumbNail : Bitmap = data!!.extras?.get("data") as Bitmap
+            binding?.ivPlaceImage?.setImageBitmap(thumbNail)
+        }
+    }
+
+
+
+
+    private fun takePhotoFromCamera() {
+        Dexter.withContext(this).withPermissions(
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA
+        ).withListener(object: MultiplePermissionsListener {
+            override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                if (report!!.areAllPermissionsGranted()) {
+                    val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+                    resultLauncherCamera.launch(cameraIntent)
+                }
+            }
+            override fun onPermissionRationaleShouldBeShown(
+                permissions: MutableList<PermissionRequest>,
+                token: PermissionToken?
+            ) {
+                showRationaleDialogForPermissions()
+            }
+        }).onSameThread().check()
+    }
+
 
 
     private fun choosePhotoFromGallery(){
@@ -161,6 +218,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
 
     companion object{
         private const val GALLERY = 1
+        private const val CAMERA = 2
     }
 
 }
