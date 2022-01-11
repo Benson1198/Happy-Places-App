@@ -1,4 +1,4 @@
-package com.example.happyplaces
+package com.example.happyplaces.activities
 
 import android.Manifest
 import android.app.Activity
@@ -41,6 +41,9 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
     private var binding: ActivityAddHappyPlaceBinding? = null
     private var cal = Calendar.getInstance()
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
+    private var saveImageToInternalStorage:Uri? = null
+    private var mLatitude:Double = 0.0
+    private var mLongitude:Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +64,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         }
         binding?.etDate?.setOnClickListener(this)
         binding?.tvAddImage?.setOnClickListener(this)
+        binding?.btnSave?.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
@@ -86,6 +90,10 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
                 }
                 pictureDialog.show()
             }
+
+            binding?.btnSave?.id ->{
+                //TODO save the DataModel to the database
+            }
         }
     }
 
@@ -102,17 +110,15 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
                             this.contentResolver,
                             contentUri
                         )
-                        val path = saveImageToInternalStorage(bitmap)
+                        saveImageToInternalStorage = saveImageToInternalStorage(bitmap)
 
-                        Log.e("Saved image: ","Path: $path")
                     } else {
                         val source =
                             contentUri?.let { ImageDecoder.createSource(this.contentResolver, it) }
                         val bitmap = source?.let { ImageDecoder.decodeBitmap(it) }
                         if (bitmap != null) {
-                            val path = saveImageToInternalStorage(bitmap)
+                            saveImageToInternalStorage = saveImageToInternalStorage(bitmap)
 
-                            Log.e("Saved image: ","Path: $path")
                         }
                     }
 
@@ -133,9 +139,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
             val data: Intent? = result.data
 
             val thumbNail : Bitmap = data!!.extras?.get("data") as Bitmap
-            val path = saveImageToInternalStorage(thumbNail)
-
-            Log.e("Saved image: ","Path: $path")
+            saveImageToInternalStorage = saveImageToInternalStorage(thumbNail)
 
             binding?.ivPlaceImage?.setImageBitmap(thumbNail)
         }
