@@ -5,16 +5,19 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
+import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.ImageDecoder
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.provider.Settings
+import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import com.example.happyplaces.databinding.ActivityAddHappyPlaceBinding
 import com.karumi.dexter.Dexter
@@ -27,7 +30,10 @@ import com.karumi.dexter.listener.PermissionRequest
 
 
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
 
 
 class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
@@ -87,11 +93,29 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
     var galleryImageResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult())
     { result ->
         if (result.resultCode == Activity.RESULT_OK) {
-
             val data: Intent? = result.data
-            if (data != null) {
+            if (data != null){
                 val contentUri = data.data
                 try {
+                    if(Build.VERSION.SDK_INT < 28) {
+                        val bitmap = MediaStore.Images.Media.getBitmap(
+                            this.contentResolver,
+                            contentUri
+                        )
+                        val path = saveImageToInternalStorage(bitmap)
+
+                        Log.e("Saved image: ","Path: $path")
+                    } else {
+                        val source =
+                            contentUri?.let { ImageDecoder.createSource(this.contentResolver, it) }
+                        val bitmap = source?.let { ImageDecoder.decodeBitmap(it) }
+                        if (bitmap != null) {
+                            val path = saveImageToInternalStorage(bitmap)
+
+                            Log.e("Saved image: ","Path: $path")
+                        }
+                    }
+
                     binding?.ivPlaceImage?.setImageURI(contentUri)
                 } catch (e: IOException) {
                     e.printStackTrace()
@@ -109,6 +133,10 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
             val data: Intent? = result.data
 
             val thumbNail : Bitmap = data!!.extras?.get("data") as Bitmap
+            val path = saveImageToInternalStorage(thumbNail)
+
+            Log.e("Saved image: ","Path: $path")
+
             binding?.ivPlaceImage?.setImageBitmap(thumbNail)
         }
     }
@@ -188,9 +216,27 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
 
     }
 
+    private fun saveImageToInternalStorage(bitmap: Bitmap):Uri{
+        val wrapper = ContextWrapper(applicationContext)
+        var file = wrapper.getDir(IMAGE_DIRECTORY, MODE_PRIVATE)
+        file = File(file, "${UUID.randomUUID()}")
+
+        try{
+            val stream:OutputStream = FileOutputStream(file)
+            bitmap.compress(Bitmap.CompressFormat.JPEG,100,stream)
+            stream.flush()
+            stream.close()
+        }catch (e:IOException){
+            e.printStackTrace()
+        }
+
+        return Uri.parse(file.absolutePath)
+    }
+
     companion object{
         private const val GALLERY = 1
         private const val CAMERA = 2
+        private const val IMAGE_DIRECTORY = "HappyPlacesImages"
     }
 
 }
