@@ -42,5 +42,6 @@ open class HappyPlacesAdapter(
     override fun getItemCount(): Int {
         return list.size
     }
+
     private class MyViewHolder(view: View) : RecyclerView.ViewHolder(view)
 }
