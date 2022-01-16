@@ -12,8 +12,10 @@ import com.example.happyplaces.R
 import androidx.recyclerview.widget.RecyclerView
 import com.example.happyplaces.activities.AddHappyPlaceActivity
 import com.example.happyplaces.activities.MainActivity
+import com.example.happyplaces.database.DatabaseHandler
 import com.example.happyplaces.models.HappyPlaceModel
 import kotlinx.android.synthetic.main.item_happy_place.view.*
+import kotlin.time.measureTimedValue
 
 
 open class HappyPlacesAdapter(
@@ -62,9 +64,20 @@ open class HappyPlacesAdapter(
         notifyItemChanged(position)
     }
 
+    fun removeAt(position: Int) {
+        val dbHandler = DatabaseHandler(context)
+        val isDeleted = dbHandler.deleteHappyPlace(list[position])
+        if(isDeleted>0){
+            list.removeAt(position)
+            notifyItemRemoved(position)
+        }
+    }
+
+
     override fun getItemCount(): Int {
         return list.size
     }
+
 
 
     interface OnClickListener{
