@@ -33,6 +33,7 @@ import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.example.happyplaces.R
 import com.example.happyplaces.database.DatabaseHandler
+import com.example.happyplaces.utils.GetAddressFromLatLng
 import com.karumi.dexter.Dexter
 import com.karumi.dexter.MultiplePermissionsReport
 import com.karumi.dexter.PermissionToken
@@ -426,6 +427,21 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
             Log.e("Current Latitude", "$mLatitude")
             mLongitude = mLastLocation.longitude
             Log.e("Current Longitude", "$mLongitude")
+
+            val addressTask = GetAddressFromLatLng(this@AddHappyPlaceActivity,mLatitude,mLongitude)
+            addressTask.setAddressListener(object :
+                GetAddressFromLatLng.AddressListener {
+                override fun onAddressFound(address: String?) {
+                    Log.e("Address ::", "" + address)
+                    et_location.setText(address) // Address is set to the edittext
+                }
+
+                override fun onError() {
+                    Log.e("Get Address ::", "Something is wrong...")
+                }
+            })
+
+            addressTask.getAddress()
         }
     }
 
