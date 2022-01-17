@@ -1,8 +1,8 @@
 package com.example.happyplaces.activities
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -10,40 +10,41 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.location.Location
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import com.example.happyplaces.R
-import com.example.happyplaces.database.DatabaseHandler
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import com.example.happyplaces.databinding.ActivityAddHappyPlaceBinding
 import com.example.happyplaces.models.HappyPlaceModel
+import com.google.android.gms.location.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
 import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
+import com.example.happyplaces.R
+import com.example.happyplaces.database.DatabaseHandler
 import com.karumi.dexter.Dexter
-import java.text.SimpleDateFormat
-import java.util.*
-import com.karumi.dexter.PermissionToken
-
 import com.karumi.dexter.MultiplePermissionsReport
+import com.karumi.dexter.PermissionToken
 import com.karumi.dexter.listener.PermissionRequest
-
-
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import kotlinx.android.synthetic.main.activity_add_happy_place.*
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
-import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
@@ -55,6 +56,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
     private var mLatitude:Double = 0.0
     private var mLongitude:Double = 0.0
     private var mHappyPlaceDetails: HappyPlaceModel? = null
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
+    private lateinit var mLocationRequest: LocationRequest
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +69,8 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         binding?.toolbarAddPlace?.setNavigationOnClickListener {
             onBackPressed()
         }
+
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         if(!Places.isInitialized()){
             Places.initialize(this@AddHappyPlaceActivity,
@@ -109,12 +114,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         binding?.tvSelectCurrentLocation?.setOnClickListener(this)
     }
 
-    private fun isLocationEnabled():Boolean{
-        val locationManager:LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-    }
 
     override fun onClick(v: View?) {
         when(v!!.id){
@@ -227,12 +227,7 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
                         .withListener(object : MultiplePermissionsListener {
                             override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
                                 if (report!!.areAllPermissionsGranted()) {
-
-                                    Toast.makeText(
-                                        this@AddHappyPlaceActivity,
-                                        "Location permission is granted. Now you can request for a current location.",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    requestNewLocationData()
                                 }
                             }
 
@@ -399,6 +394,39 @@ class AddHappyPlaceActivity : AppCompatActivity(), View.OnClickListener{
         }
 
         return Uri.parse(file.absolutePath)
+    }
+
+    private fun isLocationEnabled():Boolean{
+        val locationManager:LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun requestNewLocationData() {
+
+        val mLocationRequest = LocationRequest()
+        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest.interval = 1000
+        mLocationRequest.fastestInterval = 0
+        mLocationRequest.numUpdates = 1
+
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        mFusedLocationClient.requestLocationUpdates(
+            mLocationRequest, mLocationCallback,
+            Looper.myLooper()
+        )
+    }
+
+    private val mLocationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            val mLastLocation: Location = locationResult.lastLocation
+            mLatitude = mLastLocation.latitude
+            Log.e("Current Latitude", "$mLatitude")
+            mLongitude = mLastLocation.longitude
+            Log.e("Current Longitude", "$mLongitude")
+        }
     }
 
     companion object{
